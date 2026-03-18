@@ -357,8 +357,7 @@ export default function AdminStats() {
                     <Tooltip formatter={(v) => [v, '']} />
                     <Funnel dataKey="value" data={funnelData} isAnimationActive>
                       <LabelList position="center" fill="#fff" fontSize={11}
-                        formatter={(_: unknown, entry: { name?: string; value?: number }) =>
-                          `${entry?.name} ${entry?.value}`} />
+                        formatter={(value: any) => String(value ?? '')} />
                     </Funnel>
                   </FunnelChart>
                 </ResponsiveContainer>

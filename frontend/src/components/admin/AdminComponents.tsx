@@ -113,9 +113,8 @@ export function AdminStatsCard({
           )}
         </div>
         <div
-          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+          className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0${!iconColor ? ' bg-primary/10' : ''}`}
           style={{ background: iconColor ? `${iconColor}22` : undefined }}
-          {...(!iconColor ? { className: 'h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10' } : {})}
         >
           <span style={{ color: iconColor }}>{icon}</span>
         </div>

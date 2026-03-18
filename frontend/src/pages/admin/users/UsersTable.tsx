@@ -162,14 +162,14 @@ export default function UsersTable({
                       <ActionButton
                         icon={<Shield className="h-3.5 w-3.5" />}
                         title="Promouvoir admin"
-                        onClick={() => onRoleChange(user.user_id, 'ADMIN')}
+                        onClick={() => onRoleChange(String(user.user_id), 'ADMIN')}
                         variant="warning"
                       />
                     ) : (
                       <ActionButton
                         icon={<ShieldCheck className="h-3.5 w-3.5" />}
                         title="Rétrograder utilisateur"
-                        onClick={() => onRoleChange(user.user_id, 'USER')}
+                        onClick={() => onRoleChange(String(user.user_id), 'USER')}
                         variant="info"
                       />
                     )}
@@ -226,7 +226,7 @@ export default function UsersTable({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
-              onClick={() => { if (deleteTarget) { onDelete(deleteTarget.user_id); setDeleteTarget(null); } }}
+              onClick={() => { if (deleteTarget) { onDelete(String(deleteTarget.user_id)); setDeleteTarget(null); } }}
             >
               Supprimer
             </AlertDialogAction>
