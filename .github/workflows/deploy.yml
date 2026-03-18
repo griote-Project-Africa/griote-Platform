@@ -199,8 +199,8 @@ jobs:
             docker pull ${{ env.FRONTEND_IMAGE }}:latest
 
             # ── Ensure Traefik network exists ────────────────────
-            docker network inspect traefik-proxy >/dev/null 2>&1 || \
-              docker network create traefik-proxy
+            docker network inspect traefik-public >/dev/null 2>&1 || \
+              docker network create traefik-public
 
             # ── Infrastructure (PostgreSQL + MinIO) ───────────────
             echo ""
@@ -221,7 +221,7 @@ jobs:
             echo "→ Waiting for backend to be healthy..."
             for i in $(seq 1 15); do
               if docker compose -f docker-compose.prod.yml exec -T backend \
-                  wget -qO- http://localhost:3000/health >/dev/null 2>&1; then
+                  wget -qO- http://localhost:3000/api/health >/dev/null 2>&1; then
                 echo "  Backend is healthy (attempt $i)"
                 break
               fi

@@ -6,11 +6,10 @@
 #
 # Prerequisites on the server:
 #   - Docker + Docker Compose plugin installed
-#   - Traefik running on network "traefik-proxy" (see README.md)
+#   - Traefik running on network "traefik-public" (see /root/traefik/)
 #   - .env file at /root/griote/.env  (copy from .env.example, fill secrets)
 #
 # First-time setup:
-#   docker network create traefik-proxy
 #   cp .env.example .env && nano .env
 #   docker compose -f docker-compose.prod.yml up -d
 #
@@ -73,7 +72,7 @@ services:
       - "traefik.http.services.griote-minio.loadbalancer.server.port=9001"
     networks:
       - griote-internal
-      - traefik-proxy
+      - traefik-public
 
   # ---------------------------------------------------------------------------
   # Backend API — Express.js REST API
@@ -92,7 +91,7 @@ services:
     volumes:
       - backend_logs:/usr/src/app/logs
     healthcheck:
-      test:         ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      test:         ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
       interval:     30s
       timeout:      10s
       retries:      3
@@ -105,7 +104,7 @@ services:
       - "traefik.http.services.griote-api.loadbalancer.server.port=3000"
     networks:
       - griote-internal
-      - traefik-proxy
+      - traefik-public
 
   # ---------------------------------------------------------------------------
   # Frontend — React SPA served by Nginx
@@ -131,7 +130,7 @@ services:
       - "traefik.http.routers.griote.middlewares=www-to-apex"
     networks:
       - griote-internal
-      - traefik-proxy
+      - traefik-public
 
 # =============================================================================
 # Volumes
@@ -153,8 +152,7 @@ networks:
     name: griote-internal
     driver: bridge
 
-  # External network managed by Traefik — must exist before running this stack
-  # Create with: docker network create traefik-proxy
-  traefik-proxy:
-    name: traefik-proxy
+  # External network managed by Traefik — already exists on the server
+  traefik-public:
+    name: traefik-public
     external: true
