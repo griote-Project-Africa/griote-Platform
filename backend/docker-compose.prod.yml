@@ -1,0 +1,102 @@
+# =============================================================================
+# Backend — Production Stack (standalone)
+# =============================================================================
+# Normalized alias for docker-compose.yml (kept for backward compatibility)
+#
+# NOTE: For full-stack deployment (backend + frontend), prefer:
+#   docker compose -f ../docker-compose.prod.yml up -d
+#
+# This file deploys backend services only (without frontend):
+#   docker compose -f docker-compose.prod.yml up -d
+# =============================================================================
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: griote-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB:       ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:         ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval:     10s
+      timeout:      5s
+      retries:      5
+      start_period: 15s
+    networks:
+      - griote-internal
+
+  minio:
+    image: minio/minio:latest
+    container_name: griote-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER:     ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test:         ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval:     30s
+      timeout:      10s
+      retries:      3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.griote-minio.rule=Host(`minio.griote.org`)"
+      - "traefik.http.routers.griote-minio.entrypoints=websecure"
+      - "traefik.http.routers.griote-minio.tls.certresolver=le"
+      - "traefik.http.services.griote-minio.loadbalancer.server.port=9001"
+    networks:
+      - griote-internal
+      - traefik-proxy
+
+  backend:
+    image: brandoniscoding/backend-griote:latest
+    container_name: griote-backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - backend_logs:/usr/src/app/logs
+    healthcheck:
+      test:         ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval:     30s
+      timeout:      10s
+      retries:      3
+      start_period: 20s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.griote-api.rule=Host(`api.griote.org`)"
+      - "traefik.http.routers.griote-api.entrypoints=websecure"
+      - "traefik.http.routers.griote-api.tls.certresolver=le"
+      - "traefik.http.services.griote-api.loadbalancer.server.port=3000"
+    networks:
+      - griote-internal
+      - traefik-proxy
+
+volumes:
+  postgres_data:
+    name: griote_postgres_data
+  minio_data:
+    name: griote_minio_data
+  backend_logs:
+    name: griote_backend_logs
+
+networks:
+  griote-internal:
+    name: griote-internal
+    driver: bridge
+  traefik-proxy:
+    name: traefik-proxy
+    external: true

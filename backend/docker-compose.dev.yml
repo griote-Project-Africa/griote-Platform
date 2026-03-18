@@ -1,0 +1,114 @@
+# =============================================================================
+# Backend — Development Services
+# =============================================================================
+# Normalized alias for compose.yaml (kept for backward compatibility)
+#
+# Prefer using the root-level docker-compose.dev.yml:
+#   docker compose -f ../docker-compose.dev.yml up -d
+#
+# Or run this file standalone (backend services only):
+#   docker compose -f docker-compose.dev.yml up -d
+# =============================================================================
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: griote-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     griote
+      POSTGRES_PASSWORD: griote
+      POSTGRES_DB:       griote
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U griote -d griote"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  minio:
+    image: minio/minio:latest
+    container_name: griote-minio-dev
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  backend:
+    build:
+      context:    .
+      dockerfile: Dockerfile
+    container_name: griote-backend-dev
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  loki:
+    image: grafana/loki:latest
+    container_name: griote-loki-dev
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/var/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    profiles: [monitoring]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: griote-prometheus-dev
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - backend
+    profiles: [monitoring]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: griote-grafana-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    profiles: [monitoring]
+
+volumes:
+  postgres_data:
+  minio_data:
+  loki_data:
+  grafana_data:
+
+networks:
+  default:
+    name: griote-dev-net

@@ -1,0 +1,42 @@
+# =============================================================================
+# Griote Platform — Root .gitignore
+# =============================================================================
+
+# ─── Environment files (NEVER commit secrets) ───────────────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.prod
+frontend/.env.local
+
+# ─── Node.js ────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─── Build outputs ──────────────────────────────────────────────────────────
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# ─── Docker ─────────────────────────────────────────────────────────────────
+# Do NOT ignore docker-compose files — they should be versioned
+
+# ─── Logs ───────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ─── OS / Editor ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# ─── Test coverage ──────────────────────────────────────────────────────────
+coverage/

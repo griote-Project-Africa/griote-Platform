@@ -1,0 +1,161 @@
+# =============================================================================
+# Griote Platform — Development Environment
+# =============================================================================
+#
+# Starts: PostgreSQL · MinIO · Backend API (with hot-reload)
+# Frontend runs separately: cd frontend && pnpm dev
+#
+# Usage:
+#   # Start backend services only
+#   docker compose -f docker-compose.dev.yml up -d
+#
+#   # Start with monitoring stack (Loki, Prometheus, Grafana)
+#   docker compose -f docker-compose.dev.yml --profile monitoring up -d
+#
+#   # View logs
+#   docker compose -f docker-compose.dev.yml logs -f backend
+#
+#   # Stop all
+#   docker compose -f docker-compose.dev.yml down
+#
+# Default credentials (dev only):
+#   PostgreSQL: griote / griote / griote
+#   MinIO:      minioadmin / minioadmin  (console: http://localhost:9001)
+#   Backend:    http://localhost:3000
+#
+# Seeder accounts (created on first startup):
+#   Admin: admin@griote.com  / Admin2024
+#   User1: user1@griote.com  / Griote2024
+#   User2: user2@griote.com  / Griote2024
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: griote-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     griote
+      POSTGRES_PASSWORD: griote
+      POSTGRES_DB:       griote
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U griote -d griote"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ---------------------------------------------------------------------------
+  # MinIO — Object storage
+  # API console: http://localhost:9001
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: griote-minio-dev
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+    volumes:
+      - minio_dev_data:/data
+    command: server /data --console-address ":9001"
+
+  # ---------------------------------------------------------------------------
+  # Backend API — mounted volume enables hot-reload
+  # http://localhost:3000
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    container_name: griote-backend-dev
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    volumes:
+      - ./backend:/usr/src/app            # Source code mount for hot-reload
+      - /usr/src/app/node_modules          # Preserve node_modules inside container
+
+  # ---------------------------------------------------------------------------
+  # Loki — Log aggregation  [--profile monitoring]
+  # ---------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:latest
+    container_name: griote-loki-dev
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/var/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    profiles: [monitoring]
+
+  # ---------------------------------------------------------------------------
+  # Prometheus — Metrics collection  [--profile monitoring]
+  # http://localhost:9090
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: griote-prometheus-dev
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - backend
+    profiles: [monitoring]
+
+  # ---------------------------------------------------------------------------
+  # Grafana — Metrics dashboard  [--profile monitoring]
+  # http://localhost:3001  (admin / admin)
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: griote-grafana-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./backend/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./backend/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    profiles: [monitoring]
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_dev_data:
+  minio_dev_data:
+  loki_data:
+  grafana_data:
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  default:
+    name: griote-dev-net

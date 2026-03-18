@@ -1,0 +1,34 @@
+# Docker Compose pour Traefik (Reverse Proxy)
+# Usage: cd traefik && docker compose up -d
+
+services:
+  # ====================== Traefik ======================
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - griote-backend-net
+    ports:
+      - "80:80"
+      - "443:443"
+      # - "8080:8080"  # Dashboard (décommenter pour debug)
+    environment:
+      - TZ=Africa/Douala
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik.yml:/traefik.yml:ro
+      - ./data/acme.json:/acme.json
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.griote.org`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=le"
+
+networks:
+  griote-backend-net:
+    external: true

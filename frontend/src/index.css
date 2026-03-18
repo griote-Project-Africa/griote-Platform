@@ -1,0 +1,449 @@
+/* =========================================
+   IMPORTS AND TAILWIND SETUP
+========================================= */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
+/* Tailwind directives */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* =========================================
+   DESIGN TOKENS – GRIOTE ACADEMIC PLATFORM
+   Primary: Deep Blue (#3b82f6)
+   Gold: Professional Amber (#C48A00 → hsl 43 100% 38%)
+   Surface: Warm off-white
+   Text: Deep charcoal / slate
+========================================= */
+
+:root {
+  /* Core brand */
+  --primary: 217 91% 60%;           /* #3b82f6 – Griote blue */
+  --accent-gold: 43 74% 49%;        /* #c48b1a – Professional amber */
+
+  /* Backgrounds */
+  --bg-warm-cream: 220 25% 97%;     /* Near-white with a cool blue tint */
+  --bg-soft-ivory: 0 0% 99%;        /* Pure near-white for cards */
+
+  /* Text */
+  --text-charcoal: 220 26% 14%;     /* #1a2035 – Deep navy charcoal */
+  --text-slate: 215 16% 47%;        /* #6b7b99 – Slate for secondary text */
+}
+
+/* =========================================
+   CSS VARIABLES (THEME: LIGHT)
+========================================= */
+
+:root {
+  /* Base */
+  --background: 220 25% 97%;
+  --foreground: 220 26% 14%;
+
+  /* Card & Popover */
+  --card: 0 0% 100%;
+  --card-foreground: 220 26% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 26% 14%;
+
+  /* Primary – brand blue */
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary – light blue tint */
+  --secondary: 217 60% 93%;
+  --secondary-foreground: 217 91% 35%;
+
+  /* Muted – cool gray */
+  --muted: 220 20% 93%;
+  --muted-foreground: 215 16% 47%;
+
+  /* Accent – Professional amber/gold */
+  --accent: 43 74% 49%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Semantic */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+
+  /* Border / Input / Ring */
+  --border: 220 20% 88%;
+  --input: 220 20% 88%;
+  --ring: 217 91% 60%;
+
+  /* Radius */
+  --radius: 0.625rem;
+
+  /* ── Sidebar (Admin) ── */
+  --sidebar-background: 222 47% 11%;       /* Deep navy */
+  --sidebar-foreground: 213 31% 82%;       /* Soft light blue-gray */
+  --sidebar-primary: 217 91% 65%;          /* Bright blue */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 222 40% 18%;           /* Slightly lighter navy */
+  --sidebar-accent-foreground: 213 31% 90%;
+  --sidebar-border: 222 35% 17%;
+  --sidebar-ring: 217 91% 65%;
+  --sidebar: hsl(222 47% 11%);
+}
+
+/* =========================================
+   CSS VARIABLES (THEME: DARK)
+========================================= */
+
+.dark {
+  --background: 222 47% 9%;
+  --foreground: 213 31% 92%;
+
+  --card: 222 40% 13%;
+  --card-foreground: 213 31% 92%;
+  --popover: 222 40% 13%;
+  --popover-foreground: 213 31% 92%;
+
+  --primary: 217 91% 65%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 222 35% 20%;
+  --secondary-foreground: 213 31% 90%;
+
+  --muted: 222 35% 18%;
+  --muted-foreground: 215 16% 58%;
+
+  --accent: 43 74% 52%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 62.8% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 222 35% 20%;
+  --input: 222 35% 22%;
+  --ring: 217 91% 65%;
+
+  --sidebar-background: 222 47% 7%;
+  --sidebar-foreground: 213 31% 85%;
+  --sidebar-primary: 217 91% 65%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 222 40% 14%;
+  --sidebar-accent-foreground: 213 31% 90%;
+  --sidebar-border: 222 35% 14%;
+  --sidebar-ring: 217 91% 65%;
+  --sidebar: hsl(222 47% 7%);
+}
+
+/* =========================================
+   @LAYER BASE: GLOBAL STYLES
+========================================= */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Ubuntu', 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+}
+
+/* =========================================
+   @LAYER COMPONENTS: REUSABLE COMPONENTS
+========================================= */
+
+@layer components {
+
+  /* ── Buttons ── */
+  .griote-button {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    @apply px-6 py-2.5 rounded-lg font-semibold text-sm shadow-sm;
+    transition: all 200ms ease;
+  }
+  .griote-button:hover { opacity: 0.9; }
+  .griote-button:active { transform: scale(0.97); }
+
+  .griote-button-accent {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    @apply px-6 py-2.5 rounded-lg font-semibold text-sm shadow-sm;
+    transition: all 200ms ease;
+  }
+  .griote-button-accent:hover { opacity: 0.9; }
+  .griote-button-accent:active { transform: scale(0.97); }
+
+  .griote-button-outline {
+    border: 1.5px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    background: transparent;
+    @apply px-6 py-2.5 rounded-lg font-semibold text-sm;
+    transition: all 200ms ease;
+  }
+  .griote-button-outline:hover { background-color: hsl(var(--muted)); }
+  .griote-button-outline:active { transform: scale(0.97); }
+
+  /* ── Cards ── */
+  .griote-card {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    @apply shadow-sm;
+    transition: box-shadow 200ms ease;
+  }
+  .griote-card:hover { box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.08); }
+
+  /* ── Section labels ── */
+  .griote-section-label {
+    @apply text-xs font-semibold uppercase tracking-widest;
+    color: hsl(var(--accent));
+  }
+
+  /* ── Typography ── */
+  .griote-title {
+    font-weight: 700;
+    font-size: 1.875rem;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
+  }
+
+  .griote-subtitle {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: hsl(var(--foreground));
+  }
+
+  .griote-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: hsl(var(--foreground));
+  }
+
+  .griote-secondary {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ── Nav item ── */
+  .nav-item {
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium;
+    transition: all 150ms ease;
+    color: hsl(var(--foreground) / 0.75);
+  }
+
+  .nav-item:hover {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--foreground));
+  }
+
+  .nav-item.active {
+    background-color: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
+  /* ── Admin sidebar item ── */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm;
+    transition: all 150ms ease;
+    color: hsl(var(--sidebar-foreground) / 0.75);
+  }
+
+  .sidebar-item:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+
+  .sidebar-item.active {
+    background-color: hsl(var(--sidebar-primary) / 0.15);
+    color: hsl(var(--sidebar-primary));
+    font-weight: 600;
+    border-left: 2px solid hsl(var(--sidebar-primary));
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    @apply border-b pb-6 mb-8;
+    border-color: hsl(var(--border));
+  }
+}
+
+/* =========================================
+   @LAYER UTILITIES: CUSTOM UTILITIES
+========================================= */
+
+@layer utilities {
+
+  /* Color utilities */
+  .bg-background    { background-color: hsl(var(--background)); }
+  .text-foreground  { color: hsl(var(--foreground)); }
+  .border-border    { border-color: hsl(var(--border)); }
+
+  .bg-card          { background-color: hsl(var(--card)); }
+  .text-card-foreground { color: hsl(var(--card-foreground)); }
+
+  .bg-popover       { background-color: hsl(var(--popover)); }
+  .text-popover-foreground { color: hsl(var(--popover-foreground)); }
+
+  .bg-primary       { background-color: hsl(var(--primary)); }
+  .text-primary     { color: hsl(var(--primary)); }
+  .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+  .border-primary   { border-color: hsl(var(--primary)); }
+
+  .bg-secondary     { background-color: hsl(var(--secondary)); }
+  .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+
+  .bg-muted         { background-color: hsl(var(--muted)); }
+  .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+
+  .bg-accent        { background-color: hsl(var(--accent)); }
+  .text-accent      { color: hsl(var(--accent)); }
+  .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+  .border-accent    { border-color: hsl(var(--accent)); }
+
+  .bg-destructive   { background-color: hsl(var(--destructive)); }
+  .text-destructive { color: hsl(var(--destructive)); }
+  .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+
+  /* ── Background surfaces ── */
+  .bg-warm-cream  { background-color: hsl(var(--background)); }
+  .bg-soft-ivory  { background-color: hsl(var(--card)); }
+
+  /* ── Text helpers ── */
+  .text-charcoal    { color: hsl(var(--text-charcoal)); }
+  .text-slate-gray  { color: hsl(var(--text-slate)); }
+
+  /* ── Gold / accent helpers ── */
+  .bg-antique-gold  { background-color: hsl(var(--accent-gold)); }
+  .text-antique-gold{ color: hsl(var(--accent-gold)); }
+  .border-antique-gold { border-color: hsl(var(--accent-gold)); }
+
+  /* ── Gradients ── */
+  .bg-primary-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(217 91% 45%) 100%
+    );
+  }
+
+  .bg-primary-subtle {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.08) 0%,
+      hsl(var(--primary) / 0.03) 100%
+    );
+  }
+
+  .bg-accent-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--accent)) 0%,
+      hsl(38 80% 45%) 100%
+    );
+  }
+
+  /* ── Elevation / shadows ── */
+  .shadow-card {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+
+  .shadow-card-hover {
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  }
+
+  /* ── Font utility ── */
+  .font-ubuntu { font-family: 'Ubuntu', sans-serif; }
+
+  /* ── Hover scale ── */
+  .griote-hover {
+    @apply transition-all duration-200;
+  }
+  .griote-hover:hover {
+    transform: translateY(-2px);
+  }
+
+  /* ── Scrollbar général ── */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* ── Scrollbar sidebar admin ── */
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(222 35% 22%) transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(222 35% 22%);
+    border-radius: 9999px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(217 91% 60% / 0.35);
+  }
+}
+
+/* =========================================
+   ANIMATIONS AND KEYFRAMES
+========================================= */
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* =========================================
+   THEME INLINE (SIDEBAR COLORS)
+========================================= */
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}

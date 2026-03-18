@@ -1,0 +1,65 @@
+// src/lib/axios.ts
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
+  withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+
+  if (
+    token &&
+    config.url &&
+    !config.url.includes("/auth/refresh")
+  ) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh")
+    ) {
+      originalRequest._retry = true;
+
+      // Only attempt refresh + redirect if the user had an active session
+      const hadToken = !!localStorage.getItem("accessToken");
+      if (!hadToken) {
+        // Unauthenticated visitor hitting a protected API — just reject silently
+        return Promise.reject(error);
+      }
+
+      try {
+        const res = await api.post("/auth/refresh");
+        const newAccessToken = res.data.accessToken;
+
+        localStorage.setItem("accessToken", newAccessToken);
+
+        if (res.data.user) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
+        window.location.href = "/connexion";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;
