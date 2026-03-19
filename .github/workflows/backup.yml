@@ -1,0 +1,78 @@
+# =============================================================================
+# Griote Platform — Backup Pipeline
+# =============================================================================
+#
+# Déclenché :
+#   - Cron nocturne : tous les jours à 02:00 UTC
+#   - Manuellement  : workflow_dispatch
+#
+# Actions :
+#   1. pg_dump compressé avec timestamp
+#   2. Rotation : garde les 7 derniers backups nocturnes
+#
+# Required GitHub Secrets:
+#   SERVER_HOST    — IP ou hostname du VPS
+#   SERVER_USER    — Utilisateur SSH
+#   SERVER_SSH_KEY — Clé privée SSH (format PEM)
+# =============================================================================
+
+name: Backup — Griote Database
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC chaque nuit
+  workflow_dispatch:        # déclenchement manuel possible
+
+env:
+  DEPLOY_PATH: /root/griote
+
+jobs:
+  backup:
+    name: Database backup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run backup via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:            ${{ secrets.SERVER_HOST }}
+          username:        ${{ secrets.SERVER_USER }}
+          key:             ${{ secrets.SERVER_SSH_KEY }}
+          timeout:         30s
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            cd ${{ env.DEPLOY_PATH }}
+
+            echo "══════════════════════════════════════════════════"
+            echo "  Griote Platform — Nightly Backup"
+            echo "  Date : $(date '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "══════════════════════════════════════════════════"
+
+            BACKUP_DIR="/root/backups/griote/nightly"
+            mkdir -p "$BACKUP_DIR"
+
+            # ── Vérifier que postgres tourne ─────────────────────
+            if ! docker compose -f docker-compose.prod.yml exec -T postgres \
+                pg_isready -U "$DB_USER" -d "$DB_NAME" >/dev/null 2>&1; then
+              echo "ERREUR : PostgreSQL ne répond pas — backup annulé"
+              exit 1
+            fi
+
+            # ── Dump compressé ────────────────────────────────────
+            BACKUP_FILE="$BACKUP_DIR/backup-$(date '+%Y%m%d-%H%M%S').sql.gz"
+            docker compose -f docker-compose.prod.yml exec -T postgres \
+              pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"
+
+            BACKUP_SIZE=$(du -sh "$BACKUP_FILE" | cut -f1)
+            echo "  Backup créé : $BACKUP_FILE ($BACKUP_SIZE)"
+
+            # ── Rotation : garder les 7 derniers ─────────────────
+            ls -t "$BACKUP_DIR"/backup-*.sql.gz 2>/dev/null | tail -n +8 | xargs rm -f || true
+            REMAINING=$(ls "$BACKUP_DIR"/backup-*.sql.gz 2>/dev/null | wc -l)
+            echo "  Backups conservés : $REMAINING"
+
+            echo ""
+            echo "══════════════════════════════════════════════════"
+            echo "  Backup terminé — $(date '+%H:%M:%S UTC')"
+            echo "══════════════════════════════════════════════════"
